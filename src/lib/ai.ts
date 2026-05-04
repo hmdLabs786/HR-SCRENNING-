@@ -11,7 +11,9 @@ export async function screenCandidate(resumeText: string, jobDescription: string
 
   if (!response.ok) {
     const errorData = await response.json();
-    throw new Error(errorData.error || "Failed to analyze resume");
+    const message = errorData.error || "Failed to analyze resume";
+    const details = errorData.details ? `: ${errorData.details}` : "";
+    throw new Error(`${message}${details}`);
   }
 
   return response.json();

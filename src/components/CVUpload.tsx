@@ -38,6 +38,10 @@ export function CVUpload({ onCandidateAdded, jobDescription }: CVUploadProps) {
       toast.info(`Processing ${file.name}...`);
       
       const resumeText = await extractTextFromPDF(file);
+      if (!resumeText || resumeText.trim().length === 0) {
+        throw new Error('Could not extract any text from the PDF. The file might be empty or scanned as an image.');
+      }
+
       const screening: ScreeningResult = await screenCandidate(resumeText, jobDescription);
 
       const newCandidate: Candidate = {
@@ -54,9 +58,25 @@ export function CVUpload({ onCandidateAdded, jobDescription }: CVUploadProps) {
 
       onCandidateAdded(newCandidate);
       toast.success(`${file.name} processed successfully! Score: ${screening.score}`);
-    } catch (error) {
-      console.error(error);
-      toast.error('Failed to process resume. Please try again.');
+    } catch (error: any) {
+      console.error('Processing error:', error);
+      let errorMessage = error.message || 'Failed to process resume. Please try again.';
+      
+      // Handle the JSON encoded Firestore error
+      try {
+        if (typeof errorMessage === 'string' && errorMessage.startsWith('{')) {
+          const parsed = JSON.parse(errorMessage);
+          if (parsed.error && parsed.error.includes('insufficient permissions')) {
+            errorMessage = 'Permission denied: You do not have authorization to add candidates to the database.';
+          } else if (parsed.error) {
+            errorMessage = `Database Error: ${parsed.error}`;
+          }
+        }
+      } catch (e) {
+        // Fallback to original message
+      }
+
+      toast.error(errorMessage);
     } finally {
       setIsUploading(false);
       setCurrentFile(null);

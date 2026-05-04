@@ -2,6 +2,7 @@ import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
 import Groq from "groq-sdk";
+import "dotenv/config";
 import { createServer as createViteServer } from "vite";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -26,13 +27,21 @@ async function startServer() {
 
   // API Routes
   app.post("/api/analyze", async (req, res) => {
+    console.log("Received analysis request");
     const { resumeText, jobDescription } = req.body;
 
     if (!resumeText || !jobDescription) {
+      console.error("Missing resumeText or jobDescription");
       return res.status(400).json({ error: "Resume text and job description are required" });
     }
 
+    if (!GROQ_API_KEY) {
+      console.error("GROQ_API_KEY is missing in environment");
+      return res.status(500).json({ error: "API key configuration missing on server" });
+    }
+
     try {
+      console.log("Calling Groq API...");
       const completion = await groq.chat.completions.create({
         messages: [
           {
@@ -52,11 +61,34 @@ ${resumeText}`
         response_format: { type: "json_object" },
       });
 
-      const result = JSON.parse(completion.choices[0]?.message?.content || "{}");
+      console.log("Groq API response received");
+      let content = completion.choices[0]?.message?.content || "{}";
+      
+      // Clean markdown if present
+      if (content.includes("```")) {
+        content = content.replace(/```json/g, "").replace(/```/g, "").trim();
+      }
+      
+      let result = JSON.parse(content);
+      
+      // Post-process to ensure types match Firestore rules
+      if (result.score !== undefined) {
+        result.score = Number(result.score);
+      } else {
+        result.score = 0;
+      }
+      
+      if (!result.reasoning) result.reasoning = "Analytical summary not provided by model.";
+      if (!result.skillsMatch) result.skillsMatch = [];
+      if (!result.missingSkills) result.missingSkills = [];
+      
       res.json(result);
     } catch (error: any) {
-      console.error("Groq API error:", error);
-      res.status(500).json({ error: "Failed to analyze resume with Groq" });
+      console.error("Groq API error details:", error);
+      res.status(500).json({ 
+        error: "Failed to analyze resume with Groq", 
+        details: error.message 
+      });
     }
   });
 
