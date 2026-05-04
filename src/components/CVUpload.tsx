@@ -4,7 +4,7 @@ import { Upload, FileText, CheckCircle2, Loader2, AlertCircle } from 'lucide-rea
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { extractTextFromPDF } from '@/src/lib/pdf';
-import { screenCandidate } from '@/src/lib/gemini';
+import { screenCandidate } from '@/src/lib/ai';
 import { Candidate, ScreeningResult } from '@/src/types';
 import { toast } from 'sonner';
 
@@ -43,7 +43,7 @@ export function CVUpload({ onCandidateAdded, jobDescription }: CVUploadProps) {
       const newCandidate: Candidate = {
         id: Math.random().toString(36).substring(7),
         name: file.name.replace('.pdf', ''),
-        email: 'extract@from.resume', // In a real app, I'd extract this with Gemini too
+        email: 'extract@from.resume', // In a real app, I'd extract this with AI too
         status: screening.score > 70 ? 'SHORTLISTED' : 'SCREENED',
         score: screening.score,
         matchReasoning: screening.reasoning,
