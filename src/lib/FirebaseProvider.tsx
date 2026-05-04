@@ -31,12 +31,27 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
     if (isLoggingIn) return;
     setIsLoggingIn(true);
     try {
+      console.log('Initiating Google Login...');
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      // Add custom parameters to force account selection if needed
+      provider.setCustomParameters({ prompt: 'select_account' });
+      const result = await signInWithPopup(auth, provider);
+      console.log('Login successful:', result.user.email);
     } catch (error: any) {
-      if (error.code !== 'auth/popup-closed-by-user' && error.code !== 'auth/cancelled-popup-request') {
-        console.error('Login error:', error);
-        toast.error('Authentication failed. Please try again.');
+      console.error('Detailed Login Error:', error);
+      if (error.code === 'auth/popup-blocked') {
+        toast.error('Login popup was blocked by your browser. Please allow popups for this site.');
+      } else if (error.code === 'auth/popup-closed-by-user') {
+        // User closed it, maybe don't show a toast for this? 
+        console.warn('User closed the popup');
+      } else if (error.code === 'auth/cancelled-popup-request') {
+        console.warn('Cancelled popup request');
+      } else if (error.code === 'auth/unauthorized-domain') {
+        const domain = window.location.hostname;
+        console.error('Domain not authorized:', domain);
+        toast.error(`Domain "${domain}" is not authorized in Firebase. Please add it to "Authorized domains" in your Firebase Console.`, { duration: 10000 });
+      } else {
+        toast.error(`Authentication failed: ${error.message}`);
       }
     } finally {
       setIsLoggingIn(false);
