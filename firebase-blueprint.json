@@ -1,0 +1,50 @@
+{
+  "entities": {
+    "Candidate": {
+      "title": "Candidate",
+      "description": "Information about a job candidate and their screening results.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Full name of the candidate" },
+        "email": { "type": "string", "description": "Candidate email address" },
+        "status": { 
+          "type": "string", 
+          "enum": ["PENDING", "SCREENED", "SHORTLISTED", "REJECTED", "INTERVIEW_SCHEDULED"],
+          "description": "Current status of the candidate in the pipeline" 
+        },
+        "score": { "type": "number", "description": "AI-generated score from 0-100" },
+        "matchReasoning": { "type": "string", "description": "AI explanation for the score" },
+        "skills": { 
+          "type": "array", 
+          "items": { "type": "string" },
+          "description": "List of skills identified in the resume"
+        },
+        "resumeText": { "type": "string", "description": "Extracted text from the resume PDF" },
+        "appliedDate": { "type": "string", "format": "date-time", "description": "ISO timestamp of application" },
+        "interviewDate": { "type": "string", "format": "date-time", "description": "Optional interview timestamp" }
+      },
+      "required": ["name", "email", "status", "appliedDate"]
+    },
+    "JobConfig": {
+      "title": "Job Configuration",
+      "description": "The current job description used for screening.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "description"]
+    }
+  },
+  "firestore": {
+    "candidates": {
+      "schema": "Candidate",
+      "description": "Collection of all screened candidates."
+    },
+    "config": {
+      "schema": "JobConfig",
+      "description": "System configuration and job descriptions."
+    }
+  }
+}

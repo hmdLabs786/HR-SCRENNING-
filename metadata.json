@@ -1,0 +1,10 @@
+{
+  "name": "HR ScreenPro Agent",
+  "description": "An AI-powered candidate screening platform that parses CVs, scores skills matching via Gemini, and automates interview scheduling with real-time notifications.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "AI-powered CV analysis",
+    "Automated skill matching",
+    "Interview scheduling system"
+  ]
+}
